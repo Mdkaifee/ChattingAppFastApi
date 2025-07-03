@@ -76,6 +76,29 @@
             background-color: #007BFF;
             color: white;
         }
+button {
+    padding: 8px 14px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+/* Add this new rule */
+form[action="/logout"] button {
+    background-color: #dc3545;
+}
+
+form[action="/logout"] button:hover {
+    background-color: #c82333;
+}
 
         tr:nth-child(even) {
             background-color: #f9f9f9;
@@ -138,6 +161,13 @@
 <body>
     <div class="container">
         <h1>Welcome {{ current_user.email }}!</h1>
+        <div style="text-align: right;">
+    <form action="/logout" method="get" style="display: inline;">
+        <button type="submit" style="background-color: #dc3545;">Logout</button>
+    </form>
+</div>
+
+
         <form action="/start_create_group" method="get">
     <button type="submit">Create New Group</button>
 </form>

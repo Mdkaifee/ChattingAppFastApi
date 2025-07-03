@@ -345,3 +345,10 @@ def update_group_members(
 
     db.commit()
     return RedirectResponse(url=f"/group_chat/{group_id}", status_code=303)
+
+
+@router.get("/logout")
+def logout():
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("access_token")
+    return response
