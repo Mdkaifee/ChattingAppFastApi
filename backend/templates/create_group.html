@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Group</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .checkbox-group {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group label {
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 500px) {
+            .card {
+                padding: 20px;
+            }
+
+            input[type="text"] {
+                font-size: 14px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Create New Group</h1>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form id="groupForm" action="/create_group" method="post" onsubmit="return validateForm()">
+            <label for="group_name">Group Name</label>
+            <input type="text" name="group_name" id="group_name" required>
+
+            <h3>Select Members</h3>
+            <div class="checkbox-group">
+                {% for user in users %}
+                    {% if user.id != current_user.id %}
+                        <label>
+                            <input type="checkbox" name="members" value="{{ user.id }}">
+                            {{ user.first_name }} {{ user.last_name }}
+                        </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <button type="submit">Create Group</button>
+        </form>
+    </div>
+
+    <script>
+        function validateForm() {
+            const checkboxes = document.querySelectorAll('input[name="members"]:checked');
+            if (checkboxes.length === 0) {
+                alert("⚠️ Please select at least one member to create the group.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

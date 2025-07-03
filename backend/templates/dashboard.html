@@ -1,0 +1,196 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>All Users</title>
+</head>
+<body>
+   <h1>Welcome {{ current_user.email }}!</h1>
+<h2>All Users</h2>
+<table border="1">
+    <tr>
+        <th>ID</th><th>Email</th><th>Name</th><th>Phone</th><th>Action</th>
+    </tr>
+    {% for user in users %}
+    <tr>
+        <td>{{ user.id }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.first_name }} {{ user.last_name }}</td>
+        <td>{{ user.phone_number }}</td>
+        <td>
+            <form action="/chat/{{ user.id }}" method="get">
+                <button type="submit">Chat</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Users</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 40px auto;
+            background-color: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #eef5ff;
+        }
+
+        button {
+            padding: 8px 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            th {
+                display: none;
+            }
+
+            tr {
+                margin-bottom: 15px;
+                background-color: white;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            td {
+                padding: 10px;
+                text-align: right;
+                position: relative;
+            }
+
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                width: 50%;
+                font-weight: bold;
+                text-align: left;
+                color: #333;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome {{ current_user.email }}!</h1>
+        <form action="/start_create_group" method="get">
+    <button type="submit">Create New Group</button>
+</form>
+<h2>Your Groups</h2>
+{% if groups %}
+    <ul>
+        {% for group in groups %}
+            <li>
+                <form action="/group_chat/{{ group.id }}" method="get" style="display:inline;">
+                    <button type="submit">{{ group.name }}</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>You are not in any groups yet.</p>
+{% endif %}
+
+        <!-- <h2>All Users</h2> -->
+
+        <table>
+            <thead>
+                <tr>
+                    <!-- <th>ID</th>
+                    <th>Email</th> -->
+                    <!-- <th>Name</th> -->
+                    <!-- <th>Phone</th> -->
+                    <!-- <th>Action</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <!-- <td data-label="ID">{{ user.id }}</td> -->
+                    <!-- <td data-label="Email">{{ user.email }}</td> -->
+                    <!-- <td data-label="Name">{{ user.first_name }} {{ user.last_name }}</td>
+                    <td data-label="Phone">{{ user.phone_number }}</td>
+                    <td data-label="Action">
+                        <form action="/chat/{{ user.id }}" method="get">
+                            <button type="submit">Chat</button>
+                        </form>
+                    </td> -->
+                    <td data-label="Name">
+    <a href="/chat/{{ user.id }}" style="text-decoration: none; color: #007BFF;">
+        {{ user.first_name }} {{ user.last_name }}
+    </a>
+</td>
+<!-- <td data-label="Action"></td>  -->
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

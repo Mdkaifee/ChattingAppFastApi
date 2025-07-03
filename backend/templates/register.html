@@ -1,0 +1,155 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>User Registration</h2>
+    <form action="/register" method="post">
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Password:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <label>Phone Number:</label><br>
+        <input type="text" name="phone_number"><br><br>
+
+        <label>First Name:</label><br>
+        <input type="text" name="first_name"><br><br>
+
+        <label>Last Name:</label><br>
+        <input type="text" name="last_name"><br><br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    {% if message %}
+        <p style="color: red;">{{ message }}</p>
+    {% endif %}
+
+    <p>Already have an account? <a href="/login">Login here</a></p>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #ffecd2, #fcb69f);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .register-container {
+            background-color: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+        }
+
+        .register-container h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .register-container label {
+            font-weight: 500;
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .register-container input[type="text"],
+        .register-container input[type="email"],
+        .register-container input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .register-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .register-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .message {
+            text-align: center;
+            color: red;
+            margin-top: 10px;
+        }
+
+        .register-container p {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .register-container a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+
+        .register-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2>User Registration</h2>
+        <form action="/register" method="post">
+            <label>Email:</label>
+            <input type="email" name="email" required>
+
+            <label>Password:</label>
+            <input type="password" name="password" required>
+
+            <label>Phone Number:</label>
+            <input type="text" name="phone_number">
+
+            <label>First Name:</label>
+            <input type="text" name="first_name">
+
+            <label>Last Name:</label>
+            <input type="text" name="last_name">
+
+            <button type="submit">Register</button>
+        </form>
+
+        {% if message %}
+            <p class="message">{{ message }}</p>
+        {% endif %}
+
+        <p>Already have an account? <a href="/login">Login here</a></p>
+    </div>
+</body>
+</html>
+
