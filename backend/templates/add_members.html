@@ -1,34 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Add Members to Group</title>
     <style>
-        body { font-family: Arial; padding: 30px; background: #f0f0f0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
         .box {
             background: white;
             max-width: 600px;
             margin: auto;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 30px 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
-        .box h2 { text-align: center; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 10px; }
+
+        .box h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        label {
+            background-color: #f1f1f1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s ease;
+        }
+
+        label:hover {
+            background-color: #e0e0e0;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
         button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #28a745;
+            margin-top: 25px;
+            padding: 12px;
+            font-size: 16px;
+            background-color: #007BFF;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-        button:hover { background: #218838; }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 600px) {
+            .box {
+                padding: 25px 20px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2>Add Members to "{{ group.name }}"</h2>
+        <h2>Add Members to "<em>{{ group.name }}</em>"</h2>
         <form action="/group/{{ group.id }}/add_members" method="post">
             {% for user in users %}
                 {% if user.id != current_user.id %}
@@ -39,7 +87,7 @@
                     </label>
                 {% endif %}
             {% endfor %}
-            <button type="submit">Update Group</button>
+            <button type="submit">✅ Update Group</button>
         </form>
     </div>
 </body>

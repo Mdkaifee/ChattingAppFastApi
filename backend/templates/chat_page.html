@@ -33,8 +33,18 @@
             align-items: center;
         }
 
-        .chat-header .actions {
-            font-size: 18px;
+        .chat-header .profile-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
         }
 
         .chat-header .actions button {
@@ -89,10 +99,19 @@
 
         .chat-input {
             display: flex;
-            border-top: 1px solid #ccc;
             align-items: center;
             padding: 10px;
             background-color: #f5f5f5;
+            border-top: 1px solid #ccc;
+        }
+
+        .chat-input button {
+            margin-left: 8px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
         }
 
         .chat-input input[type="text"] {
@@ -100,23 +119,19 @@
             padding: 10px;
             border: none;
             border-radius: 4px;
-            outline: none;
             font-size: 16px;
         }
 
-        .chat-input button {
-            margin-left: 8px;
-            padding: 10px 16px;
-            border: none;
-            background: #075E54;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
+        .emoji-toggle {
+            background: #eee;
+        }
+
+        .emoji-toggle:hover {
+            background: #ddd;
         }
 
         .emoji-picker {
-            margin: 0;
+            display: none;
             padding: 10px;
             background: #fff;
             border-top: 1px solid #ccc;
@@ -125,9 +140,19 @@
         }
 
         .emoji-picker span {
-            font-size: 20px;
-            margin: 5px;
+            font-size: 22px;
+            margin: 6px;
             cursor: pointer;
+        }
+
+        .microphone-button {
+            background: #d7ddd9;
+            color: white;
+            font-size: 18px;
+        }
+
+        .microphone-button:hover {
+            background: #d4d9da;
         }
 
         .clearfix::after {
@@ -138,47 +163,62 @@
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <span>Chatting with {{ receiver.first_name }} {{ receiver.last_name }}</span>
-            <div class="actions">
-                <button onclick="startAudioCall()" title="Audio Call">📞</button>
-                <button onclick="startVideoCall()" title="Video Call">👩🏻‍💻</button>
-            </div>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="profile-info">
+            <img src="/user/photo/{{ receiver.id }}" class="profile-pic" alt="Profile Picture" onerror="this.src='/static/default-profile.png'">
+            <!-- <img src="{{ receiver.profile_url or '/static/default-profile.png' }}" class="profile-pic" alt="Profile Picture"> -->
+            <span style="margin-left: 10px;">{{ receiver.first_name }} {{ receiver.last_name }}</span>
         </div>
-
-        <div class="chat-messages" id="messages">
-            {% set ns = namespace(current_date=None) %}
-            {% for msg in messages %}
-                {% set msg_date = msg.timestamp.strftime('%Y-%m-%d') %}
-                {% if msg_date != ns.current_date %}
-                    <div class="date-separator">{{ msg_date }}</div>
-                    {% set ns.current_date = msg_date %}
-                {% endif %}
-
-                <div class="message {% if msg.sender.id == current_user.id %}sender{% else %}receiver{% endif %} clearfix">
-                    <div class="text">{{ msg.message }}</div>
-                    <div class="time">{{ msg.timestamp.strftime('%H:%M') }}</div>
-                </div>
-            {% endfor %}
+        <div class="actions">
+            <button onclick="startAudioCall()" title="Audio Call">📞</button>
+            <button onclick="startVideoCall()" title="Video Call">👩🏻‍💻</button>
         </div>
-
-        <div class="emoji-picker" id="emojiPicker">
-            <!-- A few emojis -->
-            <span onclick="addEmoji('😊')">😊</span>
-            <span onclick="addEmoji('😂')">😂</span>
-            <span onclick="addEmoji('❤️')">❤️</span>
-            <span onclick="addEmoji('👍')">👍</span>
-            <span onclick="addEmoji('🎉')">🎉</span>
-            <span onclick="addEmoji('🔥')">🔥</span>
-            <span onclick="addEmoji('😢')">😢</span>
-        </div>
-
-        <form class="chat-input" onsubmit="sendMessage(event)">
-            <input type="text" id="messageInput" placeholder="Type your message..." required>
-            <button type="submit">Send</button>
-        </form>
     </div>
+
+    <div class="chat-messages" id="messages">
+        {% set ns = namespace(current_date=None) %}
+        {% for msg in messages %}
+            {% set msg_date = msg.timestamp.strftime('%Y-%m-%d') %}
+            {% if msg_date != ns.current_date %}
+                <div class="date-separator">{{ msg_date }}</div>
+                {% set ns.current_date = msg_date %}
+            {% endif %}
+            <div class="message {% if msg.sender.id == current_user.id %}sender{% else %}receiver{% endif %} clearfix">
+                <div class="text">
+                    {% if msg.message == "__AUDIO_CALL__" %}
+                        📞 <em>Voice call started</em>
+                    {% elif msg.message == "__VIDEO_CALL__" %}
+                        👩🏻‍💻 <em>Video call started</em>
+                    {% else %}
+                        {{ msg.message }}
+                    {% endif %}
+                </div>
+                <div class="time">{{ msg.timestamp.strftime('%H:%M') }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="emoji-picker" id="emojiPicker">
+        <span onclick="addEmoji('😊')">😊</span>
+        <span onclick="addEmoji('😂')">😂</span>
+        <span onclick="addEmoji('❤️')">❤️</span>
+        <span onclick="addEmoji('👍')">👍</span>
+        <span onclick="addEmoji('🎉')">🎉</span>
+        <span onclick="addEmoji('🔥')">🔥</span>
+        <span onclick="addEmoji('😢')">😢</span>
+        <span onclick="addEmoji('😍')">😍</span>
+        <span onclick="addEmoji('😎')">😎</span>
+        <span onclick="addEmoji('🤔')">🤔</span>
+    </div>
+
+    <form class="chat-input" onsubmit="sendMessage(event)">
+        <button type="button" class="emoji-toggle" onclick="toggleEmojiPicker()">😊</button>
+        <input type="text" id="messageInput" placeholder="Type your message..." required>
+        <button type="submit">Send</button>
+        <button type="button" class="microphone-button" onclick="startMicrophone()" title="Record Voice">🎙️</button>
+    </form>
+</div>
 
 <script>
     const CURRENT_USER_ID = "{{ current_user.id }}";
@@ -190,31 +230,104 @@
         console.log("✅ WebSocket connected");
     };
 
-    ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        const sender_id = msg.sender_id;
-        const message = msg.message;
-        const time = msg.timestamp;
+    // ws.onmessage = (event) => {
+    //     const msg = JSON.parse(event.data);
+    //     const sender_id = msg.sender_id;
+    //     const message = msg.message;
+    //     const time = msg.timestamp;
 
-        const isSender = sender_id == CURRENT_USER_ID;
+    //     const isSender = sender_id == CURRENT_USER_ID;
 
-        const msgDiv = document.createElement('div');
-        msgDiv.classList.add('message', isSender ? 'sender' : 'receiver', 'clearfix');
+    //     const msgDiv = document.createElement('div');
+    //     msgDiv.classList.add('message', isSender ? 'sender' : 'receiver', 'clearfix');
 
-        const textDiv = document.createElement('div');
-        textDiv.classList.add('text');
+    //     const textDiv = document.createElement('div');
+    //     textDiv.classList.add('text');
+
+    //     if (message === "__AUDIO_CALL__") {
+    //         textDiv.innerHTML = "📞 <em>Voice call started</em>";
+    //     } else if (message === "__VIDEO_CALL__") {
+    //         textDiv.innerHTML = "👩🏻‍💻 <em>Video call started</em>";
+    //     } else {
+    //         textDiv.textContent = message;
+    //     }
+
+    //     const timeDiv = document.createElement('div');
+    //     timeDiv.classList.add('time');
+    //     timeDiv.textContent = time;
+
+    //     msgDiv.appendChild(textDiv);
+    //     msgDiv.appendChild(timeDiv);
+
+    //     const messagesContainer = document.getElementById('messages');
+    //     messagesContainer.appendChild(msgDiv);
+    //     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // };
+ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    const sender_id = msg.sender_id;
+    const message = msg.message;
+    const time = msg.timestamp;
+
+    // ✅ Handle incoming AUDIO call (if you're the receiver)
+  let isInCall = false;
+
+if (message === "__AUDIO_CALL__" && sender_id != CURRENT_USER_ID && !isInCall) {
+    isInCall = true;
+    if (confirm("📞 Incoming Audio Call! Accept?")) {
+        window.open(`/audio_call/${sender_id}?caller=false`, '_blank');
+    } else {
+        isInCall = false;
+    }
+    return;
+}
+
+if (message === "__VIDEO_CALL__" && sender_id != CURRENT_USER_ID && !isInCall) {
+    isInCall = true;
+    if (confirm("🎥 Incoming Video Call! Accept?")) {
+        window.open(`/video_call/${sender_id}?caller=false`, '_blank');
+    } else {
+        isInCall = false;
+    }
+    return;
+}
+
+    // ✅ Handle incoming VIDEO call (if you're the receiver)
+    if (message === "__VIDEO_CALL__" && sender_id != CURRENT_USER_ID) {
+        if (confirm("🎥 Incoming Video Call! Accept?")) {
+            window.open(`/video_call/${sender_id}?caller=false`, '_blank');
+        }
+        return;
+    }
+
+    // ✅ Render regular chat message
+    const isSender = sender_id == CURRENT_USER_ID;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message', isSender ? 'sender' : 'receiver', 'clearfix');
+
+    const textDiv = document.createElement('div');
+    textDiv.classList.add('text');
+
+    if (message === "__AUDIO_CALL__") {
+        textDiv.innerHTML = "📞 <em>Voice call started</em>";
+    } else if (message === "__VIDEO_CALL__") {
+        textDiv.innerHTML = "👩🏻‍💻 <em>Video call started</em>";
+    } else {
         textDiv.textContent = message;
+    }
 
-        const timeDiv = document.createElement('div');
-        timeDiv.classList.add('time');
-        timeDiv.textContent = time;
+    const timeDiv = document.createElement('div');
+    timeDiv.classList.add('time');
+    timeDiv.textContent = time;
 
-        msgDiv.appendChild(textDiv);
-        msgDiv.appendChild(timeDiv);
+    msgDiv.appendChild(textDiv);
+    msgDiv.appendChild(timeDiv);
 
-        document.getElementById('messages').appendChild(msgDiv);
-        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-    };
+    const messagesContainer = document.getElementById('messages');
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+};
 
     ws.onclose = () => {
         console.log("❌ WebSocket disconnected");
@@ -236,14 +349,29 @@
         input.focus();
     }
 
-    function startAudioCall() {
-        alert("📞 Starting audio call with user ID: " + receiverId);
-        // Future: Open WebRTC audio call
+    function toggleEmojiPicker() {
+        const picker = document.getElementById("emojiPicker");
+        picker.style.display = picker.style.display === "none" ? "flex" : "none";
     }
 
-    function startVideoCall() {
-        alert("🎥 Starting video call with user ID: " + receiverId);
-        // Future: Open WebRTC video call
+function startAudioCall() {
+    ws.send("__AUDIO_CALL__");
+    setTimeout(() => {
+        window.open(`/audio_call/${receiverId}?caller=true`, '_blank');
+    }, 200); // small delay ensures message is sent before receiver handles it
+}
+
+function startVideoCall() {
+    ws.send("__VIDEO_CALL__");
+    setTimeout(() => {
+        window.open(`/video_call/${receiverId}?caller=true`, '_blank');
+    }, 200);
+}
+
+
+    function startMicrophone() {
+        alert("🎙️ Microphone button clicked. Implement voice recording or speech-to-text here.");
+        // Add recording or speech-to-text logic here
     }
 </script>
 

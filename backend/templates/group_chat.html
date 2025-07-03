@@ -5,120 +5,287 @@
     <title>Group Chat - {{ group.name }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #c9d6ff, #e2e2e2);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .chat-box {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
             max-width: 800px;
-            margin: auto;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 40px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        h2 {
-            text-align: center;
-        }
-
-        .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 6px;
-        }
-
-        .sent {
-            background: #d1ffd6;
-            text-align: right;
-        }
-
-        .received {
-            background: #f0f0f0;
-        }
-
-        form {
-            display: flex;
-            margin-top: 20px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px 0 0 6px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
+        .chat-header {
             background: #007BFF;
             color: white;
-            border-radius: 0 6px 6px 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .group-photo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .group-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .upload-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-form input[type="file"] {
+            font-size: 12px;
+        }
+
+        .upload-form button {
+            padding: 5px 10px;
+            font-size: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
         }
 
-        button:hover {
-            background: #0056b3;
+        .upload-form button:hover {
+            background-color: #218838;
+        }
+
+        .chat-body {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .sent {
+            align-self: flex-end;
+            background-color: #d1ffd6;
+            text-align: right;
+            border-bottom-right-radius: 0;
+        }
+
+        .received {
+            align-self: flex-start;
+            background-color: #f0f0f0;
+            border-bottom-left-radius: 0;
+        }
+
+        .message strong {
+            display: block;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .chat-footer {
+            display: flex;
+            padding: 0;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-footer input[type="text"] {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 0 0 0 12px;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .chat-footer button {
+            padding: 0 20px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            font-size: 15px;
+            border-radius: 0 0 12px 0;
+            cursor: pointer;
+        }
+
+        .chat-footer button:hover {
+            background-color: #0056b3;
+        }
+
+        .chat-meta {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            font-size: 14px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .add-members {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .add-members form button {
+            background-color: #28a745;
+            border: none;
+            color: white;
+            padding: 6px 16px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .add-members form button:hover {
+            background-color: #218838;
+        }
+
+        @media (max-width: 600px) {
+            .chat-box {
+                margin: 20px 10px;
+            }
+
+            .message {
+                max-width: 90%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="chat-box">
-        <h2>Group: {{ group.name }}</h2>
-        <form action="/group/{{ group.id }}/add_members" method="get" style="text-align: center; margin-bottom: 15px;">
-    <button type="submit" style="padding: 6px 14px;">➕ Add Members</button>
-</form>
+        <!-- ✅ Group Header with Profile Photo -->
+        <div class="chat-header">
+            <div class="group-header">
+                <img id="groupPhoto" 
+                     src="/group/photo/{{ group.id }}" 
+                     alt="Group Photo" 
+                     class="group-photo"
+                     onerror="this.onerror=null;this.src='/static/default-group.png';">
+                <h2>{{ group.name }}</h2>
+            </div>
 
-        <p><strong>Members:</strong>
+            <!-- ✅ Upload Form -->
+            <form id="groupPhotoForm" class="upload-form" enctype="multipart/form-data">
+                <input type="file" id="groupFile" name="file" accept="image/*" required>
+                <button type="submit">Upload</button>
+            </form>
+        </div>
+
+        <div class="chat-meta">
+            <strong>Members:</strong>
             {% for member in group.members %}
                 {{ member.first_name }} {{ member.last_name }}{% if not loop.last %}, {% endif %}
             {% endfor %}
-        </p>
+        </div>
 
-        <!-- ✅ Chat message container -->
-        <div id="messages">
+        <div class="add-members">
+            <form action="/group/{{ group.id }}/add_members" method="get">
+                <button type="submit">➕ Add Members</button>
+            </form>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-body" id="messages">
             {% for msg in messages %}
                 <div class="message {% if msg.sender_id == current_user.id %}sent{% else %}received{% endif %}">
-                    <strong>{{ msg.sender.first_name }}:</strong> {{ msg.message }}
+                    <strong>{{ msg.sender.first_name }}</strong>
+                    {{ msg.message }}
                 </div>
             {% endfor %}
         </div>
 
-        <!-- ✅ Message input form -->
-        <form id="chat-form">
-            <input type="text" name="message" id="message-input" placeholder="Type a message..." required>
+        <!-- Chat Input -->
+        <form id="chat-form" class="chat-footer">
+            <input type="text" id="message-input" name="message" placeholder="Type a message..." required>
             <button type="submit">Send</button>
         </form>
-
-        <!-- ✅ WebSocket script -->
-        <script>
-            const socket = new WebSocket(`ws://${location.host}/ws/group_chat/{{ group.id }}`);
-            const input = document.getElementById("message-input");
-            const form = document.getElementById("chat-form");
-            const messagesContainer = document.getElementById("messages");
-
-            socket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                const messageBox = document.createElement("div");
-                messageBox.classList.add("message");
-                messageBox.classList.add(data.sender_id == {{ current_user.id }} ? "sent" : "received");
-                messageBox.innerHTML = `<strong>${data.sender_name}:</strong> ${data.message}`;
-                messagesContainer.appendChild(messageBox);
-
-                // ✅ Auto scroll to bottom
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            };
-
-            form.addEventListener("submit", function(e) {
-                e.preventDefault();
-                if (input.value.trim() !== "") {
-                    socket.send(input.value.trim());
-                    input.value = "";
-                }
-            });
-        </script>
     </div>
+
+    <!-- WebSocket + Upload JS -->
+    <script>
+        const socket = new WebSocket(`ws://${location.host}/ws/group_chat/{{ group.id }}`);
+        const input = document.getElementById("message-input");
+        const form = document.getElementById("chat-form");
+        const messagesContainer = document.getElementById("messages");
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const messageBox = document.createElement("div");
+            messageBox.classList.add("message");
+            messageBox.classList.add(data.sender_id == {{ current_user.id }} ? "sent" : "received");
+            messageBox.innerHTML = `<strong>${data.sender_name}</strong>${data.message}`;
+            messagesContainer.appendChild(messageBox);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+            if (input.value.trim() !== "") {
+                socket.send(input.value.trim());
+                input.value = "";
+            }
+        });
+
+        // Scroll to bottom on load
+        window.onload = () => {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        // ✅ Upload Group Photo
+        const groupForm = document.getElementById("groupPhotoForm");
+        const groupFileInput = document.getElementById("groupFile");
+        const groupImage = document.getElementById("groupPhoto");
+
+        groupForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const file = groupFileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`/upload_group_photo/{{ group.id }}`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    groupImage.src = `/group/photo/{{ group.id }}?t=${new Date().getTime()}`;
+                } else {
+                    alert("Failed to upload photo");
+                }
+            } catch (err) {
+                alert("Upload error occurred");
+            }
+        });
+    </script>
 </body>
 </html>

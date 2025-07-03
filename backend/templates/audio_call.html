@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Call</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 40px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        .status {
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .buttons {
+            margin-top: 30px;
+        }
+        .buttons button {
+            padding: 12px 24px;
+            font-size: 16px;
+            margin: 0 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .accept-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .cut-btn {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h2>
+        {% if caller %}
+            📞 Calling {{ receiver.first_name }} {{ receiver.last_name }}
+        {% else %}
+            📞 Incoming call from {{ current_user.first_name }} {{ current_user.last_name }}
+        {% endif %}
+    </h2>
+
+    <div class="status">
+        {% if caller %}
+            You are the <strong>caller</strong>.
+        {% else %}
+            You are the <strong>receiver</strong>.
+        {% endif %}
+    </div>
+
+    <div class="buttons">
+        {% if caller %}
+            <button class="cut-btn" onclick="endCall()">❌ Cut</button>
+        {% else %}
+            <button class="accept-btn" onclick="acceptCall()">✅ Receive</button>
+            <button class="cut-btn" onclick="endCall()">❌ Cut</button>
+        {% endif %}
+    </div>
+
+ <script>
+    const userId = {{ current_user.id }};
+    const receiverId = {{ receiver.id }};
+    const isCaller = {{ 'true' if caller else 'false' }};
+    const ws = new WebSocket(`ws://${location.host}/ws/${userId}`);
+
+    ws.onopen = () => {
+        if (isCaller) {
+            ws.send(JSON.stringify({
+                type: "call",
+                to: receiverId,
+                from: userId,
+                name: "{{ current_user.first_name }}"
+            }));
+        }
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "call") {
+            window.location.href = `/audio_call/${data.from}?caller=false`;
+        } else if (data.type === "hangup") {
+            alert("Call ended by the other user.");
+            redirectAfterHangup();
+        }
+    };
+
+    function acceptCall() {
+        alert("✅ Call Accepted!");
+    }
+
+    function endCall() {
+        ws.send(JSON.stringify({
+            type: "hangup",
+            to: receiverId,
+            from: userId
+        }));
+        redirectAfterHangup();
+    }
+
+    function redirectAfterHangup() {
+        if (isCaller) {
+            window.location.href = `/chat/${receiverId}`;
+        } else {
+            window.location.href = "/dashboard";
+        }
+    }
+</script>
+
+
+
+</body>
+</html>

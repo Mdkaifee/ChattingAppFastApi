@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table            #help to interact with relational database                       # assuming correct import path
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, Table            #help to interact with relational database                       # assuming correct import path
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -13,6 +13,7 @@ class User(Base):                                         #a table for users in 
     phone_number = Column(String(20), nullable=False)     
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    profile_photo = relationship("UserPhoto", uselist=False, back_populates="user")
     groups = relationship("Group", secondary="group_members", back_populates="members")
 
 class Message(Base):
@@ -39,6 +40,7 @@ class Group(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     created_by = Column(Integer, ForeignKey("users.id"))
+    profile_photo = relationship("GroupPhoto", uselist=False, back_populates="group")
     members = relationship("User", secondary=group_members, back_populates="groups")
 
 class GroupMessage(Base):
@@ -52,3 +54,26 @@ class GroupMessage(Base):
 
     group = relationship("Group", backref="messages")
     sender = relationship("User")
+
+
+class UserPhoto(Base):
+    __tablename__ = "user_photos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    photo = Column(LargeBinary, nullable=False)
+    mime_type = Column(String(100), nullable=False)
+
+    user = relationship("User", back_populates="profile_photo")
+
+
+class GroupPhoto(Base):
+    __tablename__ = "group_photos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("groups.id"), unique=True)
+    photo = Column(LargeBinary, nullable=False)
+    mime_type = Column(String(100), nullable=False)
+
+    group = relationship("Group", back_populates="profile_photo")
+

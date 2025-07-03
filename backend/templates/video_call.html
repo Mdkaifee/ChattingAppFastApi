@@ -1,0 +1,96 @@
+<!-- /templates/video_call.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Call</title>
+    <style>
+        video {
+            width: 45%;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        #buttons {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<h2>Video Call Between You and {{ receiver.first_name }}</h2>
+<video id="localVideo" autoplay muted></video>
+<video id="remoteVideo" autoplay></video>
+
+<div id="buttons">
+    <button onclick="startCall()">Start</button>
+    <button onclick="hangup()">Hang Up</button>
+</div>
+
+<script>
+const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+
+const ws = new WebSocket(`ws://${location.host}/ws/signaling/{{ receiver.id }}`);
+let pc = null;
+
+ws.onmessage = async (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.offer) {
+        await createPeer();
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        ws.send(JSON.stringify({ answer }));
+    }
+
+    if (data.answer) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+    }
+
+    if (data.candidate) {
+        try {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (e) {
+            console.error('Error adding received ICE candidate', e);
+        }
+    }
+};
+
+async function createPeer() {
+    pc = new RTCPeerConnection();
+
+    pc.onicecandidate = event => {
+        if (event.candidate) {
+            ws.send(JSON.stringify({ candidate: event.candidate }));
+        }
+    };
+
+    pc.ontrack = event => {
+        remoteVideo.srcObject = event.streams[0];
+    };
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localVideo.srcObject = stream;
+
+    stream.getTracks().forEach(track => {
+        pc.addTrack(track, stream);
+    });
+}
+
+async function startCall() {
+    await createPeer();
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    ws.send(JSON.stringify({ offer }));
+}
+
+function hangup() {
+    if (pc) {
+        pc.close();
+        pc = null;
+    }
+    ws.close();
+    window.close();
+}
+</script>
+</body>
+</html>

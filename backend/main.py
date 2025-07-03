@@ -1,20 +1,26 @@
 from fastapi import FastAPI, Request, Form, Depends
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from backend import models, database, crud, schemas, utils, auth
+from backend import api
 from backend.api import router as api_router  
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
 from datetime import datetime
+# from backend.signaling import connect_user, disconnect_user, forward_signal, websocket_endpoint
+from backend.signaling import connect_user, disconnect_user, forward_signal
 
+
+# api.add_api_websocket_route("/ws/{user_id}", websocket_endpoint)
 # Initialize the app
 app = FastAPI()
 connected_users: List[WebSocket] = []
 active_connections = {}
 # Create DB tables
 models.Base.metadata.create_all(bind=database.engine)
-
+app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 # Load templates
 templates = Jinja2Templates(directory="backend/templates")
 
@@ -94,6 +100,7 @@ def login_from_form(
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
+
 @app.websocket("/ws/chat/{receiver_id}")
 async def chat_websocket(websocket: WebSocket, receiver_id: int):
     await websocket.accept()
@@ -145,30 +152,6 @@ async def chat_websocket(websocket: WebSocket, receiver_id: int):
         print(f"❌ User {user_id} disconnected")
         active_connections.pop(str(user_id), None)
     
-
-@app.websocket("/ws/call/{receiver_id}")
-async def call_signaling(websocket: WebSocket, receiver_id: int):
-    await websocket.accept()
-
-    # Get current user from token
-    token = websocket.cookies.get("access_token")
-    user = auth.decode_token(token) if token else None
-    if not user:
-        await websocket.close()
-        return
-
-    user_id = user.id
-    active_connections[str(user_id)] = websocket
-
-    try:
-        while True:
-            data = await websocket.receive_text()
-            receiver_ws = active_connections.get(str(receiver_id))
-            if receiver_ws:
-                await receiver_ws.send_text(data)
-    except WebSocketDisconnect:
-        print(f"❌ User {user_id} disconnected from call")
-        active_connections.pop(str(user_id), None)
 @app.websocket("/ws/group_chat/{group_id}")
 async def websocket_group_chat(websocket: WebSocket, group_id: int):
     await websocket.accept()
@@ -215,3 +198,17 @@ async def websocket_group_chat(websocket: WebSocket, group_id: int):
     except WebSocketDisconnect:
         print(f"User {user_id} left group {group_id}")
         active_connections[key].remove(websocket)
+
+
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int):
+    await connect_user(user_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            to = data.get("to")
+            if to:
+                await forward_signal(to, data)
+    except WebSocketDisconnect:
+        disconnect_user(user_id)
+

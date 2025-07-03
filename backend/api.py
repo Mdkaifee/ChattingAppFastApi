@@ -1,13 +1,25 @@
+import os
+import shutil
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from django import apps
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, WebSocket
 from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+
+
+from backend.signaling import connect_user, disconnect_user, forward_signal
 from . import crud, schemas, database, utils , models
 from . import auth
 from jose import jwt
 from datetime import datetime,timedelta
 from fastapi import status
+from fastapi import APIRouter, Response
+from fastapi.responses import RedirectResponse
+from .auth import get_current_user  # ✅ make sure this path is correct based on your project
+from .models import User
+
 
 
 router = APIRouter()
@@ -61,7 +73,7 @@ def register_user(
 
 # ✅ Updated Login Route: redirect to /dashboard
 @router.post("/login", response_class=HTMLResponse)
-def login_from_form(
+def login_form(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
@@ -71,42 +83,19 @@ def login_from_form(
     if not user or not utils.verify_password(password, user.hashed_password):
         return templates.TemplateResponse("login.html", {"request": request, "message": "Invalid credentials"})
 
-    # ✅ Create token
-    # ✅ Create token
+    # Create token
     token_data = {
         "sub": str(user.id),
-        "exp": datetime.utcnow() + timedelta(minutes=30)
+        "exp": datetime.utcnow() + timedelta(minutes=60)
     }
     token = jwt.encode(token_data, auth.SECRET_KEY, algorithm=auth.ALGORITHM)
 
-
+    # Set token in cookie
     response = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="access_token", value=token, httponly=True)
+    response.set_cookie(key="access_token", value=token, httponly=True, path="/")
     return response
-# @router.get("/dashboard", response_class=HTMLResponse)
-# async def dashboard(
-#     request: Request,
-#     db: Session = Depends(database.get_db),
-#     current_user=Depends(auth.get_current_user)
-# ):
-#     try:
-#         users = db.query(models.User).all()
 
-#         # ✅ Get groups where the current user is a member
-#         groups = (
-#             db.query(models.Group)
-#             .filter(models.Group.members.any(id=current_user.id))
-#             .all()
-#         )
 
-#         return templates.TemplateResponse("dashboard.html", {
-#             "request": request,
-#             "users": users,
-#             "groups": groups,  # ✅ This was missing
-#             "current_user": current_user
-#         })
-#     except Exception as e:
-#         return HTMLResponse(f"<h2>Error: {e}</h2>", status_code=500)
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(
     request: Request,
@@ -125,21 +114,7 @@ async def dashboard(
     except Exception as e:
         return HTMLResponse(f"<h2>Error: {e}</h2>", status_code=500)
 
-# @router.get("/dashboard", response_class=HTMLResponse)
-# async def dashboard(
-#     request: Request,
-#     db: Session = Depends(database.get_db),
-#     current_user=Depends(auth.get_current_user)
-# ):
-#     try:
-#         users = db.query(models.User).all()
-#         return templates.TemplateResponse("dashboard.html", {
-#             "request": request,
-#             "users": users,
-#             "current_user": current_user
-#         })
-#     except Exception as e:
-#         return HTMLResponse(f"<h2>Error: {e}</h2>", status_code=500)
+
 @router.get("/chat/{receiver_id}", response_class=HTMLResponse)
 def chat_page(
     receiver_id: int,
@@ -201,42 +176,7 @@ def send_message(
         return HTMLResponse(f"<h2>❌ Error: {e}</h2>", status_code=500)
     
 
-# @router.post("/create_group", response_class=HTMLResponse)
-# def create_group(
-#     request: Request,
-#     group_name: str = Form(...),
-#     members: Optional[List[int]] = Form(None),
-#     db: Session = Depends(get_db),
-#     current_user: models.User = Depends(auth.get_current_user)
-# ):
-#     if not members:
-#         users = db.query(models.User).all()
-#         return templates.TemplateResponse("create_group.html", {
-#             "request": request,
-#             "users": users,
-#             "current_user": current_user,
-#             "error": "❗ Please choose at least one member to create a group."
-#         })
 
-#     # ✅ Create the group
-#     group = models.Group(name=group_name, created_by=current_user.id)
-#     db.add(group)
-#     db.commit()
-#     db.refresh(group)
-
-#     # ✅ Add members
-#     for member_id in members:
-#         member = db.query(models.User).get(member_id)
-#         if member:
-#             group.members.append(member)
-
-#     # ✅ Merge current_user into this DB session before appending
-#     current_user_merged = db.merge(current_user)
-#     group.members.append(current_user_merged)
-
-#     db.commit()
-
-#     return RedirectResponse(url="/dashboard", status_code=303)
 @router.post("/create_group", response_class=HTMLResponse)
 def create_group(
     request: Request,
@@ -284,16 +224,6 @@ def group_chat(group_id: int, request: Request, db: Session = Depends(get_db), c
         "current_user": current_user
     })
 
-# @router.post("/group_chat/{group_id}")
-# def send_group_message(group_id: int, message: str = Form(...), db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
-#     msg = models.GroupMessage(
-#         group_id=group_id,
-#         sender_id=current_user.id,
-#         message=message
-#     )
-#     db.add(msg)
-#     db.commit()
-#     return RedirectResponse(url=f"/group_chat/{group_id}", status_code=303)
 
 @router.get("/start_create_group", response_class=HTMLResponse)
 def show_group_user_selector(
@@ -348,7 +278,101 @@ def update_group_members(
 
 
 @router.get("/logout")
-def logout():
-    response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie("access_token")
+def logout(response: Response):
+    response = RedirectResponse(url="/login", status_code=302)
+    response.delete_cookie(key="access_token", path="/", httponly=True)
     return response
+
+
+@router.post("/upload_profile_photo")
+async def upload_profile_photo(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    contents = await file.read()
+    mime_type = file.content_type
+
+    existing = db.query(models.UserPhoto).filter_by(user_id=current_user.id).first()
+    if existing:
+        existing.photo = contents
+        existing.mime_type = mime_type
+    else:
+        photo = models.UserPhoto(user_id=current_user.id, photo=contents, mime_type=mime_type)
+        db.add(photo)
+
+    db.commit()
+    return {"detail": "Photo uploaded"}
+
+@router.get("/user/photo/{user_id}")
+def get_user_photo(user_id: int, db: Session = Depends(get_db)):
+    photo = db.query(models.UserPhoto).filter_by(user_id=user_id).first()
+    if photo:
+        return Response(content=photo.photo, media_type=photo.mime_type)
+    raise HTTPException(status_code=404, detail="User photo not found")
+
+# Upload route
+@router.post("/upload_group_photo/{group_id}")
+async def upload_group_photo(group_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    group = db.query(models.Group).filter(models.Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    contents = await file.read()
+    mime_type = file.content_type
+
+    existing = db.query(models.GroupPhoto).filter_by(group_id=group_id).first()
+    if existing:
+        existing.photo = contents
+        existing.mime_type = mime_type
+    else:
+        new_photo = models.GroupPhoto(group_id=group_id, photo=contents, mime_type=mime_type)
+        db.add(new_photo)
+
+    db.commit()
+    return {"message": "Group photo uploaded"}
+
+# Serve image
+@router.get("/group/photo/{group_id}")
+def get_group_photo(group_id: int, db: Session = Depends(get_db)):
+    photo = db.query(models.GroupPhoto).filter_by(group_id=group_id).first()
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return Response(content=photo.photo, media_type=photo.mime_type)
+
+@router.get("/audio_call/{receiver_id}", response_class=HTMLResponse)
+def audio_call(
+    receiver_id: int,
+    caller: bool = Query(False),
+    request: Request = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    receiver = db.query(User).filter(User.id == receiver_id).first()
+    if not receiver:
+        return HTMLResponse(content="Receiver not found", status_code=404)
+
+    return templates.TemplateResponse("audio_call.html", {
+        "request": request,
+        "receiver": receiver,
+        "caller": caller,
+        "current_user": current_user
+    })
+@router.get("/audio_call/{user_id}", response_class=HTMLResponse)
+def audio_call(
+    user_id: int,
+    caller: bool = Query(False),  # /audio_call/2?caller=true
+    request: Request = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    receiver = db.query(models.User).filter(models.User.id == user_id).first()
+    if not receiver:
+        return HTMLResponse(content="Receiver not found", status_code=404)
+
+    return templates.TemplateResponse("audio_call.html", {
+        "request": request,
+        "receiver": receiver,
+        "caller": caller,
+        "current_user": current_user
+    })

@@ -1,148 +1,153 @@
-<!-- <!DOCTYPE html>
-<html>
-<head>
-    <title>All Users</title>
-</head>
-<body>
-   <h1>Welcome {{ current_user.email }}!</h1>
-<h2>All Users</h2>
-<table border="1">
-    <tr>
-        <th>ID</th><th>Email</th><th>Name</th><th>Phone</th><th>Action</th>
-    </tr>
-    {% for user in users %}
-    <tr>
-        <td>{{ user.id }}</td>
-        <td>{{ user.email }}</td>
-        <td>{{ user.first_name }} {{ user.last_name }}</td>
-        <td>{{ user.phone_number }}</td>
-        <td>
-            <form action="/chat/{{ user.id }}" method="get">
-                <button type="submit">Chat</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-
-
-</body>
-</html> -->
 
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>All Users</title>
+    <title>Dashboard - {{ current_user.first_name }}</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+            background: linear-gradient(to right, #eef2f3, #8e9eab);
             min-height: 100vh;
         }
 
         .container {
-            width: 90%;
-            max-width: 1000px;
+            width: 95%;
+            max-width: 1100px;
             margin: 40px auto;
             background-color: white;
             padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
         }
 
-        h1, h2 {
-            text-align: center;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
             color: #333;
+            font-size: 24px;
+        }
+
+        .header form {
+            display: inline;
+        }
+
+        button, .group-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px 0;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover, .group-button:hover {
+            background-color: #0056b3;
+        }
+
+        .logout-button {
+            background-color: #dc3545;
+        }
+
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+
+        .section {
+            margin-top: 30px;
+        }
+
+        .group-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .group-list form {
+            display: inline;
+        }
+
+        .group-button {
+            background-color: #17a2b8;
+            border-radius: 8px;
+            padding: 10px 16px;
+        }
+
+        h2 {
+            color: #444;
+            margin-bottom: 10px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
+            margin-top: 20px;
         }
 
         th, td {
-            padding: 12px 15px;
-            border: 1px solid #ddd;
+            padding: 12px;
             text-align: center;
-            font-size: 15px;
+            border: 1px solid #ddd;
         }
 
         th {
-            background-color: #007BFF;
+            background-color: #007bff;
             color: white;
         }
-button {
-    padding: 8px 14px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #218838;
-}
-
-/* Add this new rule */
-form[action="/logout"] button {
-    background-color: #dc3545;
-}
-
-form[action="/logout"] button:hover {
-    background-color: #c82333;
-}
 
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #f8f9fa;
         }
 
         tr:hover {
-            background-color: #eef5ff;
+            background-color: #e2e6ea;
         }
 
-        button {
-            padding: 8px 14px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+        a.user-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
         }
 
-        button:hover {
-            background-color: #218838;
+        a.user-link:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
-            table, thead, tbody, th, td, tr {
-                display: block;
+            .header {
+                flex-direction: column;
+                gap: 10px;
             }
 
-            th {
-                display: none;
+            .group-list {
+                flex-direction: column;
+            }
+
+            table, thead, tbody, tr, td, th {
+                display: block;
+                width: 100%;
             }
 
             tr {
                 margin-bottom: 15px;
                 background-color: white;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
                 border-radius: 8px;
-                overflow: hidden;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             }
 
             td {
-                padding: 10px;
                 text-align: right;
+                padding: 10px;
                 position: relative;
             }
 
@@ -150,77 +155,155 @@ form[action="/logout"] button:hover {
                 content: attr(data-label);
                 position: absolute;
                 left: 15px;
-                width: 50%;
                 font-weight: bold;
-                text-align: left;
                 color: #333;
+                text-align: left;
+            }
+
+            th {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome {{ current_user.email }}!</h1>
-        <div style="text-align: right;">
-    <form action="/logout" method="get" style="display: inline;">
-        <button type="submit" style="background-color: #dc3545;">Logout</button>
-    </form>
-</div>
-
-
-        <form action="/start_create_group" method="get">
-    <button type="submit">Create New Group</button>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>Welcome, {{ current_user.first_name }}!</h1>
+        <form action="/logout" method="get">
+    <button type="submit">Logout</button>
 </form>
-<h2>Your Groups</h2>
-{% if groups %}
-    <ul>
-        {% for group in groups %}
-            <li>
-                <form action="/group_chat/{{ group.id }}" method="get" style="display:inline;">
-                    <button type="submit">{{ group.name }}</button>
+
+    </div>
+
+<h3>Upload Profile Photo</h3>
+<form id="photoUploadForm">
+    <input type="file" id="profileFile" name="file" accept="image/*" required>
+    <button type="submit">Upload</button>
+</form>
+<p id="uploadStatus" style="color: green;"></p>
+
+<!-- Show current profile image -->
+<img id="profileImage"
+     src="/user/photo/{{ current_user.id }}" 
+     alt="Profile" 
+     width="80" 
+     height="80" 
+     style="border-radius: 50%;" 
+     onerror="this.onerror=null;this.src='/static/default-profile.png';">
+
+
+
+    <!-- Group Section -->
+    <div class="section">
+        <form action="/start_create_group" method="get">
+            <button type="submit">➕ Create New Group</button>
+        </form>
+
+        <h2>Your Groups</h2>
+        {% if groups %}
+        <div class="group-list">
+            {% for group in groups %}
+                <form action="/group_chat/{{ group.id }}" method="get">
+                    <button class="group-button">{{ group.name }}</button>
                 </form>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>You are not in any groups yet.</p>
-{% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+            <p>You are not in any groups yet.</p>
+        {% endif %}
+    </div>
 
-        <!-- <h2>All Users</h2> -->
-
+    <!-- Users Section -->
+    <div class="section">
+        <h2>Available Users</h2>
         <table>
             <thead>
                 <tr>
-                    <!-- <th>ID</th>
-                    <th>Email</th> -->
-                    <!-- <th>Name</th> -->
-                    <!-- <th>Phone</th> -->
-                    <!-- <th>Action</th> -->
+                    <th>Name</th>
+                    <!-- <th>Chat</th> -->
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
+                {% if user.id != current_user.id %}
                 <tr>
-                    <!-- <td data-label="ID">{{ user.id }}</td> -->
-                    <!-- <td data-label="Email">{{ user.email }}</td> -->
-                    <!-- <td data-label="Name">{{ user.first_name }} {{ user.last_name }}</td>
-                    <td data-label="Phone">{{ user.phone_number }}</td>
-                    <td data-label="Action">
+                    <td data-label="Name">
+                        <a class="user-link" href="/chat/{{ user.id }}">
+                            {{ user.first_name }} {{ user.last_name }}
+                        </a>
+                    </td>
+                    <!-- <td data-label="Chat">
                         <form action="/chat/{{ user.id }}" method="get">
-                            <button type="submit">Chat</button>
+                            <button type="submit">💬 Chat</button>
                         </form>
                     </td> -->
-                    <td data-label="Name">
-    <a href="/chat/{{ user.id }}" style="text-decoration: none; color: #007BFF;">
-        {{ user.first_name }} {{ user.last_name }}
-    </a>
-</td>
-<!-- <td data-label="Action"></td>  -->
-
                 </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
     </div>
+</div>
+<script>
+    // ✅ Profile Photo Upload
+    const form = document.getElementById("photoUploadForm");
+    const fileInput = document.getElementById("profileFile");
+    const statusText = document.getElementById("uploadStatus");
+    const profileImage = document.getElementById("profileImage");
+
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const file = fileInput.files[0];
+            if (!file) {
+                statusText.textContent = "Please select a file.";
+                statusText.style.color = "red";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/upload_profile_photo", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    statusText.textContent = "✅ Photo uploaded successfully!";
+                    statusText.style.color = "green";
+                    // Reload image by bypassing cache
+                    profileImage.src = `/user/photo/{{ current_user.id }}?t=${new Date().getTime()}`;
+                } else {
+                    statusText.textContent = "❌ Failed to upload photo.";
+                    statusText.style.color = "red";
+                }
+            } catch (err) {
+                console.error(err);
+                statusText.textContent = "❌ Error uploading photo.";
+                statusText.style.color = "red";
+            }
+        });
+    }
+
+    // ✅ Audio Call WebSocket Signaling
+    const userId = {{ current_user.id }};
+    const socket = new WebSocket(`ws://${location.host}/ws/${userId}`);
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === "call") {
+            // 👇 Automatically redirect receiver to audio_call page
+            window.location.href = `/audio_call/${data.from}?caller=false`;
+        }
+    };
+</script>
+
+
+
 </body>
 </html>
